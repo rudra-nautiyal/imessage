@@ -20,7 +20,7 @@ router.post("/", async (req, res) => {
 
     const request = new Request("http://internal/webhooks/clerk", {
       method: "POST",
-      headers: new Headers(req.header),
+      headers: new Headers(req.headers),
       body: payload,
     });
 
