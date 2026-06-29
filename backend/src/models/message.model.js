@@ -19,7 +19,7 @@ const messageSchema = new mongoose.Schema(
       type: String,
     },
     video: {
-      type: Stirng,
+      type: String,
     },
   },
   { timestamps: true },
