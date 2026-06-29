@@ -13,7 +13,7 @@ export async function getUsersForSidebar(req, res) {
 
     res.status(200).json(filteredUsers);
   } catch (error) {
-    console.error("Error in getUsersForSiderbar", error.message);
+    console.error("Error in getUsersForSidebar", error.message);
     res.status(500).json({ message: "Internal Server Error" });
   }
 }
