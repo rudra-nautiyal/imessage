@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 
 import "dotenv/config";
+
 import fs from "fs";
 import path from "path";
 
@@ -35,22 +36,20 @@ app.get("/health", (req, res) => {
   res.status(200).json({ ok: true });
 });
 
-app.use("api/auth", authRoutes);
-app.use("api/messages", messageRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/messages", messageRoutes);
 
 if (fs.existsSync(publicDir)) {
   app.use(express.static(publicDir));
 
   app.get("/{*any}", (req, res, next) => {
-    res.sendFile(path.join(publicDir, "index.html", (err) => next(err)));
+    res.sendFile(path.join(publicDir, "index.html"), (err) => next(err));
   });
 }
 
 server.listen(PORT, () => {
   connectDB();
-  console.log("Server is running on PORT:", PORT);
+  console.log("Server is up and running on PORT:", PORT);
 
-  if (process.env.NODE_ENV === "production") {
-    job.start();
-  }
+  if (process.env.NODE_ENV === "production") job.start();
 });
