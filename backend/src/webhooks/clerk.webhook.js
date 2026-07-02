@@ -1,6 +1,7 @@
 import express from "express";
 import User from "../models/user.model.js";
 import { verifyWebhook } from "@clerk/backend/webhooks";
+import Message from "../models/message.model.js";
 
 const router = express.Router();
 
@@ -46,7 +47,19 @@ router.post("/", async (req, res) => {
     }
 
     if (evt.type === "user.deleted") {
-      if (evt.data.id) await User.findOneAndDelete({ clerkId: evt.data.id });
+      if (evt.data.id) {
+        const deletedUser = await User.findOneAndDelete({
+          clerkId: evt.data.id,
+        });
+        if (deletedUser) {
+          await Message.deleteMany({
+            $or: [
+              { senderId: deletedUser._id },
+              { receiverId: deletedUser._id },
+            ],
+          });
+        }
+      }
     }
 
     res.status(200).json({ received: true });
