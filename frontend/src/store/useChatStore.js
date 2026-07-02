@@ -96,12 +96,10 @@ export const useChatStore = create(
 
         socket.off("newMessage");
         socket.on("newMessage", (newMessage) => {
-          // if im not the receiver don't do anything just return
-          if (String(newMessage.senderId) !== String(userId)) return;
-
-          set({ messages: [...get().messages, newMessage] });
-
-          get().getConversations();
+          if (String(newMessage.senderId) === String(userId)) {
+            set({ messages: [...get().messages, newMessage] });
+          }
+          get().getConversations(); // always refresh sidebar, regardless of active chat
         });
       },
 
