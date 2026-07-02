@@ -13,8 +13,8 @@ export async function getUsersForSidebar(req, res) {
 
     res.status(200).json(filteredUsers);
   } catch (error) {
-    console.error("Error in getUsersForSidebar", error.message);
-    res.status(500).json({ message: "Internal Server Error" });
+    console.error("Error in getUsersForSidebar:", error.message);
+    res.status(500).json({ message: "Internal server error" });
   }
 }
 
@@ -23,13 +23,16 @@ export async function getConversationsForSidebar(req, res) {
     const loggedInUserId = req.user._id;
 
     const conversations = await Message.aggregate([
+      // 1. Keep only the messages I sent or received.
       {
         $match: {
           $or: [{ senderId: loggedInUserId }, { receiverId: loggedInUserId }],
         },
       },
+      // 2. Collapse them into one row per chat partner, noting our latest message time.
       {
         $group: {
+          // The partner is the other person on the message (not me).
           _id: {
             $cond: [
               { $eq: ["$senderId", loggedInUserId] },
@@ -40,8 +43,9 @@ export async function getConversationsForSidebar(req, res) {
           lastMessageAt: { $max: "$createdAt" },
         },
       },
-
+      // 3. Put the most recent conversation at the top.
       { $sort: { lastMessageAt: -1 } },
+      // 4. Look up each partner's user profile (comes back as an array).
       {
         $lookup: {
           from: "users",
@@ -50,7 +54,9 @@ export async function getConversationsForSidebar(req, res) {
           as: "user",
         },
       },
+      // 5. Pull that profile out of the array and make it the document.
       { $replaceRoot: { newRoot: { $first: "$user" } } },
+      // 6. Hide the private clerkId field from the result.
       { $project: { clerkId: 0 } },
     ]);
 
@@ -97,7 +103,6 @@ export async function sendMessage(req, res) {
       }
 
       const url = await uploadChatMedia(req.file);
-
       if (req.file.mimetype.startsWith("video/")) videoUrl = url;
       else imageUrl = url;
     }
@@ -113,7 +118,7 @@ export async function sendMessage(req, res) {
     await newMessage.save();
 
     const receiverSocketId = getReceiverSocketId(receiverId);
-
+    // only send the message in realtime if user is online
     if (receiverSocketId) {
       io.to(receiverSocketId).emit("newMessage", newMessage);
     }
